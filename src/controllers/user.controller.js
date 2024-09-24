@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import cookie from "cookie-parser";
+import jwt from "jsonwebtoken";
 // import fs from "fs";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -160,7 +160,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   // create this options object to pass in cookie becaause bydefault it you do not pass this option (httponly:true and secure:true) any one can update cookie from frontend but if you pass these options then cookie is only can modify in server.
   const options = {
-    httOnly: true,
+    HttOnly: true,
     secure: true,
   };
 
@@ -180,9 +180,78 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-
 const logOut = asyncHandler(async(req, res)=>{
-  
+  User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set:{
+        refreshToken:undefined
+      }
+    },
+    {
+      new : true
+    }
+  )
+  const options = {
+    HttOnly: true,
+    secure: true,
+  };
+
+  return res
+  .status(200)
+  .clearCookie("accessToken", options)
+  .clearCookie("refreshToken", options)
+  .json(
+    new ApiResponse(
+      200, 
+      {},
+      "user loggedOut successfully !!!"
+    )
+  )
+
 })
 
-export { registerUser, loginUser, logOut };
+const refreshAccessToken = asyncHandler(async(req, res)=>{
+  const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+  if(!incomingRefreshToken){
+    throw new ApiError(401, "Unauthorized request !!!")
+  }
+
+ try {
+   const decodedToken = jwt.verify(
+     incomingRefreshToken,
+     process.env.REFRESH_TOKEN_SECRET
+   )
+ 
+   const user = await User.findById(decodedToken._id)
+ 
+   if(incomingRefreshToken !== user?.refreshtoken){
+     throw new ApiError(401, "Refresh token is expired or used !!!")
+   }
+   
+   const {accessToken, newRefreshToken}= await generateAccessAndRefreshToken(user._id)
+ 
+   const options = {
+     HttOnly: true,
+     secure: true,
+   };
+ 
+   return res
+   .cookie("accessToken", accessToken, options)
+   .cookie("newRefreshToken", accessToken, options)
+   .json(
+     new ApiResponse(
+       200,
+       {accessToken, newRefreshToken},
+       "Access token refreshed successfully"
+     )
+   )
+ 
+ } catch (error) {
+  throw new ApiError(401, error?.message || "Invalid refresh token !!!")
+ }
+
+})
+
+export { registerUser, loginUser, logOut, refreshAccessToken };
