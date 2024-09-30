@@ -1,35 +1,59 @@
-import { v2 as cloudinary } from "cloudinary";
+import {v2 as cloudinary} from "cloudinary";
 import fs from "fs";
 
-// Configuration
+
 cloudinary.config({
   cloud_name: "dldua3ewy",
-  api_key: "639967642911262",
-  api_secret: "dJYRcMGPyiB9chB_78v6Mgbu1AE",
+  api_key: "784923938518947",
+  api_secret: "Ev_hoMqEfqztAU-iV1loIfH6GWE",
 });
 
-//  const imgUrl = "https://images.unsplash.com/photo-1726766406089-0308c800b6b2?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHwzfHx8ZW58MHx8fHx8"
-// Function to upload an image to Cloudinary
-const uploadOnCloudinary = async (localFilePath) => {
-  try {
-    if (!localFilePath) throw new Error("No file path provided");
 
-    const uploadResult = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-      timeout: 1200000
+  
+async function UploadImages(filePath, resourceType = "image", folder = "user_images") {
+  try {
+    // Ensure Cloudinary is reachable before uploading
+    await cloudinary.api.ping();
+
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder: folder,
+      resource_type: resourceType,
+      timeout: 120000, // Adjust timeout as needed
     });
 
-    console.log(uploadResult)
-    // Delete the local file after successful upload
-    // fs.unlinkSync(localFilePath);
-    return uploadResult;
+    fs.unlinkSync(filePath);
+
+    console.log("File uploaded successfully!", result);
+    return result;
   } catch (error) {
-    console.error("Error during file upload to Cloudinary:", error.message || error.error.message, error.http_code, error.name);
-    // Delete the local file if upload fails
-    if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
-
-    return null;
+    console.error("Error uploading file to Cloudinary:", error);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    throw new ApiError(500, "Failed to upload file to Cloudinary");
   }
-};
+}
 
-export { uploadOnCloudinary };
+
+  export { UploadImages}
+
+
+
+
+
+
+  // console.log(cloudinary.config());
+
+
+// function UploadVideos(){
+//   const videoURL ="https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_30mb.mp4";
+
+//   cloudinary.uploader
+//   .upload(videoURL, { folder: "user_Videos", resource_type:"video", timeout:120000 }) 
+//   .then((result) => {
+//     console.log("Image uploaded successfully!", result);
+//   })
+//   .catch((error) => {
+//     console.error("Error uploading image to Cloudinary:", error);
+//   });
+ 
+// }
+//   cloudinary.api.ping().then(UploadVideos);

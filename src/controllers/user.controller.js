@@ -1,8 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { UploadImages } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 // import fs from "fs";
 
@@ -90,10 +90,10 @@ const registerUser = asyncHandler(async (req, res) => {
   // }
 
   const Avatar = avatarLocalPath
-    ? await uploadOnCloudinary(avatarLocalPath)
+    ? await UploadImages(avatarLocalPath)
     : null;
   const CoverImage = coverImageLocalPath
-    ? await uploadOnCloudinary(coverImageLocalPath)
+    ? await UploadImages(coverImageLocalPath)
     : null;
 
   // if(!Avatar){
