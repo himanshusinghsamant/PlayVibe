@@ -23,7 +23,7 @@ async function UploadImages(filePath, resourceType = "image", folder = "user_ima
 
     fs.unlinkSync(filePath);
 
-    console.log("File uploaded successfully!", result);
+    console.log("File uploaded successfully in cloudinary!", result);
     return result;
   } catch (error) {
     console.error("Error uploading file to Cloudinary:", error);
@@ -40,20 +40,4 @@ async function UploadImages(filePath, resourceType = "image", folder = "user_ima
 
 
 
-  // console.log(cloudinary.config());
-
-
-// function UploadVideos(){
-//   const videoURL ="https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_30mb.mp4";
-
-//   cloudinary.uploader
-//   .upload(videoURL, { folder: "user_Videos", resource_type:"video", timeout:120000 }) 
-//   .then((result) => {
-//     console.log("Image uploaded successfully!", result);
-//   })
-//   .catch((error) => {
-//     console.error("Error uploading image to Cloudinary:", error);
-//   });
- 
-// }
-//   cloudinary.api.ping().then(UploadVideos);
+  
