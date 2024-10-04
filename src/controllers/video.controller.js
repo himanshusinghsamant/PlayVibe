@@ -75,9 +75,9 @@ const uploadVideos = asyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, userVideo, "fields got successfully !!!"));
   } catch (error) {
-    throw new ApiError(402, "Something wrong !!! : ", error);
+    throw new ApiError(401,`Something went wrong !!! : ${error}` )
   }
-});
+});    
 
 const getSingleVideo = asyncHandler(async (req, res) => {
   try {
@@ -107,33 +107,37 @@ const getSingleVideo = asyncHandler(async (req, res) => {
       message: "Single video data successfully fetched!",
     });
   } catch (error) {
-    throw new ApiError(401, "something is wrong !!!", error);
+    throw new ApiError(401,`Something went wrong !!! : ${error}` )
   }
 });
 
 const getAllVideoDataOfUser = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  if (!userId) {
-    throw new ApiError(401, "You haven't provided loggedin UserId !!!");
-  }
-
-  // Find all videos where owner equals the logged-in user
-  const query = { owner: userId };
-
-  const allVideos = await Video.find(query);
-  if (!allVideos) {
-    throw new ApiError(401, "Unable to find data from Videos !!!");
-  }
-
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        allVideos,
-        "Data of all videos fetched successfully !!!"
-      )
-    );
+try {
+    const userId = req.user._id;
+    if (!userId) {
+      throw new ApiError(401, "You haven't provided loggedin UserId !!!");
+    }
+  
+    // Find all videos where owner equals the logged-in user
+    const query = { owner: userId };
+  
+    const allVideos = await Video.find(query);
+    if (!allVideos) {
+      throw new ApiError(401, "Unable to find data from Videos !!!");
+    }
+  
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          allVideos,
+          "Data of all videos fetched successfully !!!"
+        )
+      );
+} catch (error) {
+  throw new ApiError(401,`Something went wrong !!! : ${error}` )
+}
 });
 
 const getAllStoredVideosData = asyncHandler(async (req, res) => {
@@ -153,7 +157,7 @@ const getAllStoredVideosData = asyncHandler(async (req, res) => {
         new ApiResponse(200, getVideos, "all data fetched successfully !!!")
       );
   } catch (error) {
-    throw new ApiError(401, "something went wrong !!!", error);
+    throw new ApiError(401,`Something went wrong !!! : ${error}` )
   }
 });
 
@@ -236,12 +240,35 @@ const updateVideo = asyncHandler(async (req, res) => {
        new ApiResponse(200, updatedVideo, "fields updated successfully !!!")
      );
  } catch (error) {
-  throw new ApiError(404, "Something went wrong !!!", error)
+  throw new ApiError(401,`Something went wrong !!! : ${error}` )
  }
 });
 
 const deleteVideo = asyncHandler(async(req, res) =>{
-
+ try {
+   const {videoId} = req.params;
+   const userId = req.user._id;
+   const sanitizedVideoId = videoId.trim(); // Remove any extra spaces or newlines
+ 
+   const user = await Video.findById(sanitizedVideoId);
+   
+   if(!user){
+     throw new ApiError(403, "Unauthorized Access !!!");
+   }
+ 
+   if(user.owner._id.toString() !== userId.toString()){
+     throw new ApiError(403, "You are not authorized to update this video !!!");
+   }
+ 
+   const deletedVideo = await Video.findByIdAndDelete(sanitizedVideoId);
+ 
+   res.status(200)
+   .json(
+     new ApiResponse(200, deleteVideo, "Video is Deleted !!!")
+   )
+ } catch (error) {
+  throw new ApiError(401,`Something went wrong !!! : ${error}` )
+ }
 })
 
 export {
@@ -250,4 +277,5 @@ export {
   getAllVideoDataOfUser,
   getAllStoredVideosData,
   updateVideo,
+  deleteVideo,
 };
