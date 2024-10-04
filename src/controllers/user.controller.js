@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { UploadImages } from "../utils/cloudinary.js";
+import { UploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 
@@ -89,9 +89,9 @@ const registerUser = asyncHandler(async (req, res) => {
     console.error("Avatar file does not exist at path:", avatarLocalPath);
   }
 
-  const Avatar = avatarLocalPath ? await UploadImages(avatarLocalPath) : null;
+  const Avatar = avatarLocalPath ? await UploadOnCloudinary(avatarLocalPath) : null;
   const CoverImage = coverImageLocalPath
-    ? await UploadImages(coverImageLocalPath)
+    ? await UploadOnCloudinary(coverImageLocalPath)
     : null;
 
   const user = await User.create({
@@ -178,8 +178,8 @@ const logOut = asyncHandler(async (req, res) => {
   User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unsetset: {
+        refreshToken: 1, //this removes the field from document
       },
     },
     {
@@ -299,7 +299,7 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
     throw new ApiError(401, "can not find a avatarlocalpath !!!")
   }
 
-  const avatar = await UploadImages(avatarLocalPath);
+  const avatar = await UploadOnCloudinary(avatarLocalPath);
 
 
   if(!avatar){
@@ -330,7 +330,7 @@ const updateUserCoverImage = asyncHandler(async(req,res)=>{
     throw new ApiError(401, "can not find a coverImagelocalpath !!!")
   }
 
-  const coverImage = await UploadImages(coverImageLocalPath);
+  const coverImage = await UploadOnCloudinary(coverImageLocalPath);
 
   if(!coverImage){
     throw new ApiError(401, "Error while uploading on coverImage !!!")

@@ -10,7 +10,7 @@ cloudinary.config({
 
 
   
-async function UploadImages(filePath, resourceType = "image", folder = "user_images") {
+async function UploadOnCloudinary(filePath, resourceType = "image", folder = "user_images") {
   try {
     // Ensure Cloudinary is reachable before uploading
     await cloudinary.api.ping();
@@ -33,7 +33,7 @@ async function UploadImages(filePath, resourceType = "image", folder = "user_ima
 }
 
 
-  export { UploadImages}
+  export { UploadOnCloudinary}
 
 
 
