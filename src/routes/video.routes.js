@@ -7,6 +7,7 @@ import { getAllVideoDataOfUser } from "../controllers/video.controller.js";
 import { getAllStoredVideosData } from "../controllers/video.controller.js";
 import { updateVideo } from "../controllers/video.controller.js";
 import { deleteVideo } from "../controllers/video.controller.js";
+import { toggleIsPublished } from "../controllers/video.controller.js";
 
 
 const router = Router();
@@ -37,5 +38,6 @@ router.route("/update-video/:videoId").patch(upload.fields([
 ]), verifyJWT,updateVideo);    // This end-point is updating single data by passing unique videoId params !!
 router.route("/delete-video/:videoId").delete(verifyJWT, deleteVideo); // verifyJWT is a middleware which checks that only loggedin user can delete the videos of user which is loggedin !! // This end-point is deleting single data by passing unique videoId params !!
 
+router.route("/toggle-publish/:videoId").patch(verifyJWT, toggleIsPublished);
 
 export default router;

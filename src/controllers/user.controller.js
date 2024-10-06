@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { UploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteAssetsFromCloudinary } from "../utils/cloudinary.js";
+import { getCloudinaryData } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 
@@ -76,8 +78,6 @@ const registerUser = asyncHandler(async (req, res) => {
     coverImageLocalPath = req.files?.coverimage[0]?.path.replace(/\\/g, "/");
   }
 
-  console.log(avatarLocalPath);
-  console.log(coverImageLocalPath);
 
   if (!avatarLocalPath) {
     throw new ApiError(
@@ -293,60 +293,111 @@ const updateAccountDetails = asyncHandler(async(req, res)=>{
 
 })
 
-const updateUserAvatar = asyncHandler(async(req,res)=>{
-  const avatarLocalPath = req.file?.path;
-  if(!avatarLocalPath){
-    throw new ApiError(401, "can not find a avatarlocalpath !!!")
-  }
-
-  const avatar = await UploadOnCloudinary(avatarLocalPath);
-
-
-  if(!avatar){
-    throw new ApiError(401, "Error while uploading on avatar !!!")
-  }
-
-  const user = await User.findByIdAndUpdate(req.user?._id, {
-    $set:{
-      avatar: avatar.url
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  try {
+    // Get the local path of the avatar image
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) {
+      throw new ApiError(400, "Avatar file path not found.");
     }
-  }, {new: true}).select("-password")
-  
-  if(!user){
-    throw new ApiError(401, "something is wrong while updating avatar in User !!!")
-  }
 
-  res.status(200)
-  .json(
-    new ApiResponse(200, user, "Avatar updated successfully !!!")
-  )
-
-})
-
-
-const updateUserCoverImage = asyncHandler(async(req,res)=>{
-  const coverImageLocalPath = req.file?.path;
-  if(!coverImageLocalPath){
-    throw new ApiError(401, "can not find a coverImagelocalpath !!!")
-  }
-
-  const coverImage = await UploadOnCloudinary(coverImageLocalPath);
-
-  if(!coverImage){
-    throw new ApiError(401, "Error while uploading on coverImage !!!")
-  }
-
-  const user = await User.findByIdAndUpdate(req.user?._id, {
-    $set:{
-      coverimage: coverImage.url
+    // Upload the avatar to Cloudinary
+    const avatar = await UploadOnCloudinary(avatarLocalPath);
+    if (!avatar) {
+      throw new ApiError(500, "Error while uploading the avatar to Cloudinary.");
     }
-  }, {new: true}).select("-password")
 
-  res.status(200)
-  .json(
-    new ApiResponse(200, user, "CoverImage updated successfully !!!")
-  )
+    // Retrieve current user's avatar from the database
+    const { avatar: existingAvatar } = await User.findById(req.user?._id);
+    if (existingAvatar) {
+      // Retrieve the public ID of the current avatar from Cloudinary
+      const getDataFromCloudinary = await getCloudinaryData(existingAvatar);
+      if (!getDataFromCloudinary) {
+        throw new ApiError(500, "Failed to retrieve current avatar data from Cloudinary.");
+      }
 
-})
+      // Extract the public ID and delete the old avatar from Cloudinary
+      const publicId = getDataFromCloudinary.public_id;
+      const deleteInCloudinary = await deleteAssetsFromCloudinary(publicId);
+
+      if (!deleteInCloudinary) {
+        throw new ApiError(500, "Failed to delete the old avatar from Cloudinary.");
+      }
+    }
+
+    // Update the user's avatar URL in the database
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user?._id,
+      { $set: { avatar: avatar?.url } },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      throw new ApiError(500, "Error updating avatar in the user profile.");
+    }
+
+    // Respond with the updated user data
+    res.status(200).json(
+      new ApiResponse(200, updatedUser, "Avatar updated successfully.")
+    );
+  } catch (error) {
+    // Handle errors and provide detailed messages
+    const errorMessage = error instanceof ApiError ? error.message : "An unexpected error occurred.";
+    res.status(error.statusCode || 500).json(new ApiError(error.statusCode || 500, `Error updating avatar: ${errorMessage}`));
+  }
+});
+
+
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  try {
+    // Get the local path of the cover image
+    const coverImageLocalPath = req.file?.path;
+    if (!coverImageLocalPath) {
+      throw new ApiError(400, "Cover image file path not found.");
+    }
+
+    // Upload the cover image to Cloudinary
+    const coverImage = await UploadOnCloudinary(coverImageLocalPath);
+    if (!coverImage) {
+      throw new ApiError(500, "Error while uploading the cover image to Cloudinary.");
+    }
+
+    // Retrieve current user's cover image from the database
+    const { coverimage } = await User.findById(req.user?._id);
+    if (coverimage) {
+      // Retrieve the public ID of the current cover image from Cloudinary
+      const getDataFromCloudinary = await getCloudinaryData(coverimage);
+      if (!getDataFromCloudinary) {
+        throw new ApiError(500, "Failed to retrieve data from Cloudinary.");
+      }
+
+      // Extract the public ID and delete the old cover image from Cloudinary
+      const publicId = getDataFromCloudinary.public_id;
+      const deleteInCloudinary = await deleteAssetsFromCloudinary(publicId);
+
+      if (!deleteInCloudinary) {
+        throw new ApiError(500, "Failed to delete the old cover image from Cloudinary.");
+      }
+    }
+
+    // Update the user's cover image URL in the database
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user?._id,
+      { $set: { coverimage: coverImage.url } },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    // Respond with the updated user data
+    res.status(200).json(
+      new ApiResponse(200, updatedUser, "Cover image updated successfully.")
+    );
+  } catch (error) {
+    // Handle errors and provide detailed messages
+    const errorMessage = error instanceof ApiError ? error.message : "An unexpected error occurred.";
+    res.status(error.statusCode || 500).json(new ApiError(error.statusCode || 500, `Error updating cover image: ${errorMessage}`));
+  }
+});
+
 
 export { registerUser, loginUser, logOut, refreshAccessToken, updatePassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage};
