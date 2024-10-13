@@ -8,7 +8,10 @@ import {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
-  getCurrentUser
+  getCurrentUser,
+  getUserChannelProfile,
+  getWatchHistory,
+  addWatchHistory
 } from "../controllers/user.controller.js"; // Import all user-related controller functions
 import { upload } from "../middlewares/multer.middleware.js"; // Multer middleware to handle file uploads
 import { verifyJWT } from "../middlewares/auth.middleware.js"; // Middleware for verifying JWT tokens (ensures the user is logged in)
@@ -73,5 +76,9 @@ router.route("/update-user-coverimage").patch(
   upload.single("coverimage"),
   updateUserCoverImage
 );
+
+router.route("/get-user-channel-profile/:username").get(getUserChannelProfile)
+router.route("/add-watch-history/:videoId").post(verifyJWT ,addWatchHistory)
+router.route("/get-watch-history").get(verifyJWT ,getWatchHistory)
 
 export default router;
