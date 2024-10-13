@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { UploadOnCloudinary } from "../utils/cloudinary.js";
 import { deleteAssetsFromCloudinary } from "../utils/cloudinary.js";
 import { getCloudinaryData } from "../utils/cloudinary.js";
-import mongoose from "mongoose";
+// import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 
