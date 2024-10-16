@@ -40,12 +40,6 @@ const registerUser = asyncHandler(async (req, res) => {
   //return response
 
   const { fullname, email, username, password } = req.body;
-  console.log({
-    fullname: fullname,
-    email: email,
-    username: username,
-    password: password,
-  });
 
   if (
     [fullname, email, username, password].some((feild) => feild?.trim() === "")
@@ -477,10 +471,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       {
         $addFields: {
           subscriberCount: {
-            $size: "subscribers",
+            $size: "$subscribers",
           },
           channelSubscribedToCount: {
-            $size: "subscribedTo",
+            $size: "$subscribedTo",
           },
           isSubscribed: {
             $cond: {

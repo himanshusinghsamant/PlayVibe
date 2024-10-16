@@ -77,7 +77,7 @@ router.route("/update-user-coverimage").patch(
   updateUserCoverImage
 );
 
-router.route("/get-user-channel-profile/:username").get(getUserChannelProfile)
+router.route("/get-user-channel-profile/:username").get(verifyJWT ,getUserChannelProfile)
 router.route("/add-watch-history/:videoId").post(verifyJWT ,addWatchHistory)
 router.route("/get-watch-history").get(verifyJWT ,getWatchHistory)
 
