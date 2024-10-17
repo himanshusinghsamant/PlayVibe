@@ -52,7 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (existedUser) {
-    throw new ApiError(409, "user with email annd username is already exists");
+    throw new ApiError(409, "user with email and username is already exists");
   }
 
   let avatarLocalPath;
