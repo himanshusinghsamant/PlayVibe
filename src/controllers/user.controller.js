@@ -41,6 +41,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const { fullname, email, username, password } = req.body;
 
+  console.log(fullname, email, username, password )
+
   if (
     [fullname, email, username, password].some((feild) => feild?.trim() === "")
   ) {
@@ -113,19 +115,19 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, username, password } = req.body;
+  const { email, password } = req.body;
 
   // Validate required fields
-  if (!email || !username || !password) {
+  if (!email || !password) {
     throw new ApiError(
       400,
-      "All fields (email, username, and password) are required."
+      "All fields (email and password) are required."
     );
   }
 
   // Find user by email or username
   const user = await User.findOne({
-    $or: [{ email }, { username }],
+    $or: [{ email }],
   });
 
   if (!user) {
@@ -175,11 +177,11 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-const logOut = asyncHandler(async (req, res) => {
-  User.findByIdAndUpdate(
+const logOut =  asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
     req.user._id,
     {
-      $unsetset: {
+      $unset: {
         refreshToken: 1, //this removes the field from document
       },
     },
